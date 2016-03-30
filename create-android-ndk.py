@@ -362,6 +362,7 @@ if not found:
   sys.exit('Not found')
 
 android_pruned_name = '{}-{}'.format(android_pruned_name, android_arch)
+android_pruned_name = '{}-{}'.format(android_pruned_name, platform.system())
 android_pruned_name = '{}.tar.gz'.format(android_pruned_name)
 
 android_pruned_archive = os.path.join(pruned_dir, android_pruned_name)
