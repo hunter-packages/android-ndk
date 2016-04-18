@@ -142,6 +142,10 @@ parser.add_argument('--abi-name', help="ABI name")
 parser.add_argument('--api-level', help="API level")
 parser.add_argument('--arch-name', help="Architecture name")
 
+parser.add_argument(
+    '--ndk-version', choices=['r10e', 'r11c'], help="NDK version"
+)
+
 args = parser.parse_args()
 
 if not args.toolchain:
@@ -174,9 +178,14 @@ os.mkdir(unpack_dir)
 if not os.path.exists(pruned_dir):
   os.mkdir(pruned_dir)
 
-ndk_version = 'r11c'
+ndk_version = args.ndk_version
 
-android_archive_local = os.path.join(downloads_dir, 'android-ndk-{}.bin'.format(ndk_version))
+if ndk_version == 'r10e':
+  archive_suffix = 'bin'
+else:
+  archive_suffix = 'zip'
+
+android_archive_local = os.path.join(downloads_dir, 'android-ndk-{}.{}'.format(ndk_version, archive_suffix))
 android_unpacked_ndk = os.path.join(unpack_dir, 'android-ndk-{}'.format(ndk_version))
 android_toolchains_dir = os.path.join(android_unpacked_ndk, 'toolchains')
 android_stl_dir = os.path.join(android_unpacked_ndk, 'sources', 'cxx-stl')
@@ -184,20 +193,38 @@ android_platforms_dir = os.path.join(android_unpacked_ndk, 'platforms')
 
 android_pruned_name = 'android-ndk-{}'.format(ndk_version)
 
+def get_darwin_info():
+  if ndk_version == 'r10e':
+    return (
+        'http://dl.google.com/android/ndk/android-ndk-r10e-darwin-x86_64.bin',
+        'b57c2b9213251180dcab794352bfc9a241bf2557'
+    )
+  if ndk_version == 'r11c':
+    return (
+        'http://dl.google.com/android/repository/android-ndk-r11c-darwin-x86_64.zip',
+        '4ce8e7ed8dfe08c5fe58aedf7f46be2a97564696'
+    )
+  sys.exit('Unknown NDK version')
+
+def get_linux_info():
+  if ndk_version == 'r10e':
+    return (
+        'http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin',
+        'c685e5f106f8daa9b5449d0a4f21ee8c0afcb2f6'
+    )
+  if ndk_version == 'r11c':
+    return (
+        'http://dl.google.com/android/repository/android-ndk-r11c-linux-x86_64.zip',
+        'de5ce9bddeee16fb6af2b9117e9566352aa7e279'
+    )
+  sys.exit('Unknown NDK version')
+
 if platform.system() == 'Darwin':
-  FileToDownload(
-      'http://dl.google.com/android/repository/android-ndk-{}-darwin-x86_64.zip'.format(ndk_version),
-      '4ce8e7ed8dfe08c5fe58aedf7f46be2a97564696',
-      android_archive_local,
-      unpack_dir
-  )
+  url, sha1 = get_darwin_info()
+  FileToDownload(url, sha1, android_archive_local, unpack_dir)
 elif platform.system() == 'Linux':
-  FileToDownload(
-      'http://dl.google.com/android/repository/android-ndk-{}-linux-x86_64.zip'.format(ndk_version),
-      'de5ce9bddeee16fb6af2b9117e9566352aa7e279',
-      android_archive_local,
-      unpack_dir
-  )
+  url, sha1 = get_linux_info()
+  FileToDownload(url, sha1, android_archive_local, unpack_dir)
 else:
   sys.exit('Android supported only for Linux and OSX')
 
@@ -357,7 +384,10 @@ for x in arch_list:
     continue
   toremove = os.path.join(android_api_dir, x)
   print('  - {}'.format(toremove))
-  shutil.rmtree(toremove)
+  if os.path.isdir(toremove):
+    shutil.rmtree(toremove)
+  else:
+    os.remove(toremove)
 if not found:
   sys.exit('Not found')
 

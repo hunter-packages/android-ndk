@@ -8,7 +8,7 @@ level ``CMakeLists.txt``:
 
 .. code-block:: shell
 
-  > build.py --toolchain android-ndk-r10e-api-19-armeabi-v7a-neon --verbose --clear --nobuild
+  > build.py --toolchain android-ndk-r11c-api-19-armeabi-v7a-neon --verbose --clear --nobuild
 
 Next variables will be printed::
 
