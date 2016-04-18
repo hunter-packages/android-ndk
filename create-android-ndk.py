@@ -193,6 +193,7 @@ android_platforms_dir = os.path.join(android_unpacked_ndk, 'platforms')
 
 android_pruned_name = 'android-ndk-{}'.format(ndk_version)
 
+# http://developer.android.com/ndk/downloads/index.html
 def get_darwin_info():
   if ndk_version == 'r10e':
     return (
