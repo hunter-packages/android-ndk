@@ -174,7 +174,7 @@ os.mkdir(unpack_dir)
 if not os.path.exists(pruned_dir):
   os.mkdir(pruned_dir)
 
-ndk_version = 'r10e'
+ndk_version = 'r11c'
 
 android_archive_local = os.path.join(downloads_dir, 'android-ndk-{}.bin'.format(ndk_version))
 android_unpacked_ndk = os.path.join(unpack_dir, 'android-ndk-{}'.format(ndk_version))
@@ -186,15 +186,15 @@ android_pruned_name = 'android-ndk-{}'.format(ndk_version)
 
 if platform.system() == 'Darwin':
   FileToDownload(
-      'http://dl.google.com/android/ndk/android-ndk-{}-darwin-x86_64.bin'.format(ndk_version),
-      'b57c2b9213251180dcab794352bfc9a241bf2557',
+      'http://dl.google.com/android/repository/android-ndk-{}-darwin-x86_64.zip'.format(ndk_version),
+      '4ce8e7ed8dfe08c5fe58aedf7f46be2a97564696',
       android_archive_local,
       unpack_dir
   )
 elif platform.system() == 'Linux':
   FileToDownload(
-      'http://dl.google.com/android/ndk/android-ndk-{}-linux-x86_64.bin'.format(ndk_version),
-      'c685e5f106f8daa9b5449d0a4f21ee8c0afcb2f6',
+      'http://dl.google.com/android/repository/android-ndk-{}-linux-x86_64.zip'.format(ndk_version),
+      'de5ce9bddeee16fb6af2b9117e9566352aa7e279',
       android_archive_local,
       unpack_dir
   )
