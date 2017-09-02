@@ -130,6 +130,8 @@ def stl_suffix_by_name(stl_name):
     return 'stlport'
   if stl_name == 'gnustl_shared' or stl_name == 'gnustl_static':
     return 'gnu-libstdc++'
+  if stl_name == 'c++_static' or stl_name == 'c++_shared':
+    return 'llvm-libc++'
   sys.exit('Unexpected --stl: {}'.format(stl_name))
 
 parser = argparse.ArgumentParser(
@@ -144,7 +146,7 @@ parser.add_argument('--api-level', help="API level")
 parser.add_argument('--arch-name', help="Architecture name")
 
 parser.add_argument(
-    '--ndk-version', choices=['r10e', 'r11c'], help="NDK version"
+    '--ndk-version', choices=['r10e', 'r11c', 'r15c'], help="NDK version"
 )
 
 args = parser.parse_args()
@@ -206,6 +208,11 @@ def get_darwin_info():
         'http://dl.google.com/android/repository/android-ndk-r11c-darwin-x86_64.zip',
         '4ce8e7ed8dfe08c5fe58aedf7f46be2a97564696'
     )
+  if ndk_version == 'r15c':
+    return (
+        'https://dl.google.com/android/repository/android-ndk-r15c-darwin-x86_64.zip',
+        'ea4b5d76475db84745aa8828000d009625fc1f98'
+    )
   sys.exit('Unknown NDK version')
 
 def get_linux_info():
@@ -218,6 +225,11 @@ def get_linux_info():
     return (
         'http://dl.google.com/android/repository/android-ndk-r11c-linux-x86_64.zip',
         'de5ce9bddeee16fb6af2b9117e9566352aa7e279'
+    )
+  if ndk_version == 'r15c':
+    return (
+        'https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip',
+        '0bf02d4e8b85fd770fd7b9b2cdec57f9441f27a2'
     )
   sys.exit('Unknown NDK version')
 
@@ -235,13 +247,18 @@ original_info = 'Original sizes: archive {}, unpacked {}'.format(
     object_printable_size(android_unpacked_ndk)
 )
 
-toolchain_dir = os.path.join(android_toolchains_dir, args.toolchain)
+toolchain = args.toolchain
+if args.compiler_version == 'clang':
+  toolchain = toolchain.replace('-clang', '-4.9')
+
+toolchain_dir = os.path.join(android_toolchains_dir, toolchain)
+
 if not os.path.exists(toolchain_dir):
   print('Toolchain not exists: {} (set by --toolchain)'.format(toolchain_dir))
 
 toolchains_list = os.listdir(android_toolchains_dir)
-if not args.toolchain in toolchains_list:
-  sys.exit('Toolchain `{}` is not in list: {}'.format(args.toolchain, toolchains_list))
+if not toolchain in toolchains_list:
+  sys.exit('Toolchain `{}` is not in list: {}'.format(toolchain, toolchains_list))
 
 stl_suffix = stl_suffix_by_name(args.stl)
 
@@ -256,11 +273,17 @@ if not stl_suffix in stl_list:
 print('Removing unused toolchains:')
 toolchain_found = False
 for x in toolchains_list:
-  if x != args.toolchain:
+  set_toolchain_found = (x == toolchain)
+  remove_dir = not set_toolchain_found
+  if (args.compiler_version == 'clang') and (x == 'llvm'):
+    remove_dir = False
+
+  if remove_dir:
     toremove = os.path.join(android_toolchains_dir, x)
     print('  - {}'.format(toremove))
     shutil.rmtree(toremove)
-  else:
+
+  if set_toolchain_found:
     if toolchain_found:
       sys.exit('Already found')
     else:
@@ -269,16 +292,22 @@ for x in toolchains_list:
 if not toolchain_found:
   sys.exit('Toolchain not found')
 
-android_pruned_name = '{}-{}'.format(android_pruned_name, args.toolchain)
+android_pruned_name = '{}-{}'.format(android_pruned_name, toolchain)
 
 print('Removing unused STL:')
 stl_found = False
 for x in stl_list:
-  if x != stl_suffix:
+  set_stl_found = (x == stl_suffix)
+  remove_dir = not set_stl_found
+  if (stl_suffix == 'llvm-libc++') and (x == 'llvm-libc++abi'):
+    remove_dir = False
+
+  if remove_dir:
     toremove = os.path.join(android_stl_dir, x)
     print('  - {}'.format(toremove))
     shutil.rmtree(toremove)
-  else:
+
+  if set_stl_found:
     if stl_found:
       sys.exit('Already found')
     else:
@@ -353,13 +382,15 @@ if not android_api in api_list:
 found = False
 print('Removing unused API:')
 for x in api_list:
+  toremove = os.path.join(android_platforms_dir, x)
+  if not os.path.isdir(toremove):
+    continue
   if x == android_api:
     if found:
       sys.exit('Already found')
     else:
       found = True
     continue
-  toremove = os.path.join(android_platforms_dir, x)
   print('  - {}'.format(toremove))
   shutil.rmtree(toremove)
 if not found:
