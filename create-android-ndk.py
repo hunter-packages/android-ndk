@@ -146,7 +146,7 @@ parser.add_argument('--api-level', help="API level")
 parser.add_argument('--arch-name', help="Architecture name")
 
 parser.add_argument(
-    '--ndk-version', choices=['r10e', 'r11c', 'r15c'], help="NDK version"
+    '--ndk-version', choices=['r10e', 'r11c', 'r15c', 'r16b'], help="NDK version"
 )
 
 args = parser.parse_args()
@@ -230,6 +230,11 @@ def get_linux_info():
     return (
         'https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip',
         '0bf02d4e8b85fd770fd7b9b2cdec57f9441f27a2'
+    )
+  if ndk_version == 'r16b':
+    return (
+        'https://dl.google.com/android/repository/android-ndk-r16b-linux-x86_64.zip',
+        '42aa43aae89a50d1c66c3f9fdecd676936da6128'
     )
   sys.exit('Unknown NDK version')
 
