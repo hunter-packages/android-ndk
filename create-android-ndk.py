@@ -146,7 +146,7 @@ parser.add_argument('--api-level', help="API level")
 parser.add_argument('--arch-name', help="Architecture name")
 
 parser.add_argument(
-    '--ndk-version', choices=['r10e', 'r11c', 'r15c', 'r16b'], help="NDK version"
+    '--ndk-version', choices=['r10e', 'r11c', 'r15c', 'r16b', 'r17'], help="NDK version"
 )
 
 args = parser.parse_args()
@@ -236,6 +236,11 @@ def get_linux_info():
         'https://dl.google.com/android/repository/android-ndk-r16b-linux-x86_64.zip',
         '42aa43aae89a50d1c66c3f9fdecd676936da6128'
     )
+  if ndk_version == 'r17':
+    return (
+        'https://dl.google.com/android/repository/android-ndk-r17-linux-x86_64.zip',
+        '1d886a64483adf3f3a3e3aaf7ac5084184006ac7'
+    )
   sys.exit('Unknown NDK version')
 
 if platform.system() == 'Darwin':
@@ -264,6 +269,8 @@ if not os.path.exists(toolchain_dir):
 toolchains_list = os.listdir(android_toolchains_dir)
 if not toolchain in toolchains_list:
   sys.exit('Toolchain `{}` is not in list: {}'.format(toolchain, toolchains_list))
+toolchains_list.remove('NOTICE-MIPS')
+toolchains_list.remove('NOTICE-MIPS64')
 
 stl_suffix = stl_suffix_by_name(args.stl)
 
